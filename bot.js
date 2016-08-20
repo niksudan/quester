@@ -18,6 +18,6 @@ bot.on('message', function(user, userID, channelID, message, rawEvent) {
 			var message = response;
 			bot.sendMessage({to: channelID, message: message});
 			console.log('[' + config.name + ' @ ' + channelID + ']: ' + message);
-		}, user);
+		}, user, channelID);
 	}
 });

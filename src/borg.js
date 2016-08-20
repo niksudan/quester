@@ -7,16 +7,17 @@ var borg = {
 		[/\bstart\b/i, 'quester', 'start'],
 		[/\bstatus\b/i, 'quester', 'status'],
 		[/\bperform ([A-Za-z ]*)\b/, 'quester', 'perform'],
+		[/\bgames\b/, 'quester', 'gameCount']
 	],
 	
-	handle: function(message, response, user)
+	handle: function(message, response, user, channelID)
 	{
 		var responded = false;
 		for (var i = 0; i < this.responses.length; i++) {
 			if (!responded && message.match(this.responses[i][0])) {
 				if (borg.mention && message.indexOf(borg.mention) > -1) {
 					responded = true;
-					this[this.responses[i][1]][this.responses[i][2]](response, message, user, this.responses[i][0]);
+					this[this.responses[i][1]][this.responses[i][2]](response, channelID, message, user, this.responses[i][0]);
 					break;
 				}
 			}

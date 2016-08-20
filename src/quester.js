@@ -25,98 +25,138 @@ var getAdverb = function() {
 	return choose(adverbs.adverbs);
 }
 
+var games = [];
+
+var getGame = function(channelID) {
+	return games['#' + channelID];
+}
+
+var deleteGame = function(channelID) {
+	delete games['#' + channelID];
+}
+
+var isGameStarted = function(channelID) {
+	var game = getGame(channelID);
+	if (game == undefined) {
+		return false;
+	}
+	return true;
+}
+
 var quester = {
-	started: false,
-	canPerform: false,
-	kills: 0,
-	rooms: 0,
-	hero: {
-		name: '',
-		health: 5
+	
+	gameCount: function(response)
+	{
+		var str = '';
+		str += ':european_castle: There are currently **' + Object.keys(games).length + '** adventurer(s)!';
+		Object.keys(games).forEach(function(i) {
+			var game = games[i];
+			str += '\n**' + game.hero.name + '**, venturing through the ' + game.dungeon.name + ' with **' + game.kills +  '** kill(s)';
+		});
+		response(str);
 	},
-	dungeon: {
-		name: '',
-		currentRoom: '',
-		currentType: '',
-	},
-	creature: {
-		name: '',
-		health: 1
+	
+	newGame: function(channelID)
+	{
+		games['#' + channelID] = { 
+			started: false,
+			canPerform: false,
+			kills: 0,
+			rooms: 0,
+			hero: {
+				name: '',
+				health: 5
+			},
+			dungeon: {
+				name: '',
+				currentRoom: '',
+				currentType: '',
+			},
+			creature: {
+				name: '',
+				health: 1
+			},
+		};
 	},
 	
 	// Start a new quest
-	start: function(response, message, user)
+	start: function(response, channelID, message, user, regex)
 	{
 		var self = this;
-		self.started = true;
-		self.hero.name = user + ', the ' + getAdj() + ' ' + getNoun();
-		response(':wave: Hail **' + this.hero.name + '**!');
-		
-		setTimeout(function() {
-			self.dungeon.name = 'Dungeon of ' + getAdj() + ' ' + getNoun();
-			response(':european_castle: Your ' + getAdj() + ' quest begins on this ' + getAdj() + ' day. You ' + getVerb().present + ' from a ' + getNoun() + ' and into the **' + self.dungeon.name + '**...');
-		}, 1000);
-		
-		setTimeout(function() {
-			self.newRoom(response);
-		}, 3000);
+		if (isGameStarted(channelID)) {
+			response(':warning: A game has already begun!');
+		} else {
+			self.newGame(channelID);
+			getGame(channelID).started = true;
+			getGame(channelID).hero.name = user + ', the ' + getAdj() + ' ' + getNoun();
+			response(':wave: Hail **' + getGame(channelID).hero.name + '**!');
+			
+			setTimeout(function() {
+				getGame(channelID).dungeon.name = 'Dungeon of ' + getAdj() + ' ' + getNoun();
+				response(':european_castle: Your ' + getAdj() + ' quest begins on this ' + getAdj() + ' day. You ' + getVerb().present + ' from a ' + getNoun() + ' and into the **' + getGame(channelID).dungeon.name + '**...');
+			}, 1000);
+			
+			setTimeout(function() {
+				self.newRoom(response, channelID);
+			}, 3000);
+		}
 	},
 	
 	// Return the hero's status
-	status: function(response)
+	status: function(response, channelID, message, user, regex)
 	{
 		var self = this;
-		if (!self.started) {
-			response('What are you doing? You haven\'t started an adventure yet!');
+		if (!isGameStarted(channelID)) {
+			response(':warning: An adventure has not started!');
 		} else {
-			response('**:walking: ' + self.hero.name + '**\nHealth: ' + self.hero.health);
-			setTimeout(function() {
-				if (self.creature.name != '') {
-					response('** :boar: The ' + self.creature.name + '**\nHealth: ' + self.creature.health);
-				}
-			}, 500)
+			var str = '**:walking: ' + getGame(channelID).hero.name + '** [HP: ' + getGame(channelID).hero.health + ']';
+			if (getGame(channelID).creature.name != '') {
+				str += '\n** :boar: The ' + getGame(channelID).creature.name + '** [HP: ' + getGame(channelID).creature.health + ']';
+			}
+			response(str);
 		}
 	},
 	
 	// Process gameover
-	gameover: function(response)
+	gameover: function(response, channelID)
 	{
 		var self = this;
-		self.started = false;
-		response('** :skull: Rest in peace, ' + self.hero.name + ' :skull: **\n\n**' + self.dungeon.name + '**\nRooms Traversed: ' + self.rooms + '\nCreatures Killed: ' + self.kills);
+		getGame(channelID).started = false;
+		response('** :skull: Rest in peace, ' + getGame(channelID).hero.name + ' :skull: **\n\n**' + getGame(channelID).dungeon.name + '**\nRooms Traversed: ' + getGame(channelID).rooms + '\nCreatures Killed: ' + getGame(channelID).kills);
+		deleteGame(channelID);
 	},
 	
 	// Process a new room
-	newRoom: function(response)
+	newRoom: function(response, channelID)
 	{
 		var self = this;
-		self.rooms += 1;
-		self.dungeon.currentRoom = getAdj() + ' ' + getNoun();
-		response(':runner: You ' + getVerb().present + ' into a ' + self.dungeon.currentRoom + '...');
+		getGame(channelID).rooms += 1;
+		getGame(channelID).dungeon.currentRoom = getAdj() + ' ' + getNoun();
+		response(':runner: You ' + getVerb().present + ' into a ' + getGame(channelID).dungeon.currentRoom + '...');
 		
 		setTimeout(function() {
-			self.dungeon.currentType = choose(['encounter']);
-			switch (self.dungeon.currentType) {
+			getGame(channelID).dungeon.currentType = choose(['encounter']);
+			switch (getGame(channelID).dungeon.currentType) {
 				
 				// Creature encounter
 				case 'encounter':
-					self.creature.name = getAdj() + ' ' + getNoun();
-					self.creature.health = choose([1, 2, 3, 3, 3, 3, 4, 4, 5]);
-					response(':boar: A **' + self.creature.name + '** ' + pluralize(getVerb().present) + ' at you' + choose(['!', '!!', '?', '...', '.', '?!']) + ' What will you do?');
-					self.canPerform = true;
+					getGame(channelID).creature.name = getAdj() + ' ' + getNoun();
+					getGame(channelID).creature.health = choose([1, 2, 3, 3, 3, 3, 4, 4, 5]);
+					response(':boar: A **' + getGame(channelID).creature.name + '** ' + pluralize(getVerb().present) + ' at you' + choose(['!', '!!', '?', '...', '.', '?!']) + ' What will you do?');
+					getGame(channelID).canPerform = true;
 					break;
 			};
 		}, 1000);
 	},
 	
 	// Perform an action
-	perform: function(response, message, user, regex)
+	perform: function(response, channelID, message, user, regex)
 	{
 		var self = this;
-		if (!self.started) {
-			response('What are you doing? You haven\'t started an adventure yet!');
-		} else if (self.canPerform) {
-			self.canPerform = false;
+		if (!isGameStarted(channelID)) {
+			response(':warning: An adventure has not started!');
+		} else if (getGame(channelID).canPerform) {
+			getGame(channelID).canPerform = false;
 			var match = message.match(regex);
 			var action = match[1];
 			
@@ -126,25 +166,25 @@ var quester = {
 					case false:
 						response(choose([
 							':crossed_swords: Your ' + action + ' missed' + choose(['!', '!!', '?', '...', '.', '?!']),
-							':crossed_swords: The ' + self.creature.name + choose([' resisted', ' was immune to', ' dodged', ' was not affected by']) + ' your ' + action + choose(['!', '!!', '?', '...', '.', '?!'])
+							':crossed_swords: The ' + getGame(channelID).creature.name + choose([' resisted', ' was immune to', ' dodged', ' was not affected by']) + ' your ' + action + choose(['!', '!!', '?', '...', '.', '?!'])
 						]));
 						break;
 					case true:
 					var damage = choose([1, 1, 1, 1, 2, 2, 2, 3]);
-					self.creature.health -= damage;
-						response(':crossed_swords: Your ' + action + ' ' + getAdverb() + ' ' + pluralize(getVerb().present) + ' the ' + self.creature.name + ' for **' + damage + ' damage**' + choose(['!', '!!', '?', '...', '.', '?!']));
+					getGame(channelID).creature.health -= damage;
+						response(':crossed_swords: Your ' + action + ' the ' + getGame(channelID).creature.name + ' ' + getAdverb() + ' for **' + damage + ' damage**' + choose(['!', '!!', '?', '...', '.', '?!']));
 						break;
 				}
 			}, 1000);
 			
 			// Process aftermath
 			setTimeout(function() {
-				if (self.creature.health <= 0) {
-					self.kills += 1;
-					response(':trophy: You defeated the ' + self.creature.name + choose(['!', '!!', '?', '...', '.', '?!']));
-					self.creature.name = '';
+				if (getGame(channelID).creature.health <= 0) {
+					getGame(channelID).kills += 1;
+					response(':trophy: You defeated the ' + getGame(channelID).creature.name + choose(['!', '!!', '?', '...', '.', '?!']));
+					getGame(channelID).creature.name = '';
 					setTimeout(function() {
-						self.newRoom(response);
+						self.newRoom(response, channelID);
 					}, 2000);
 				} else {
 					switch (choose([false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, true])) {
@@ -152,33 +192,33 @@ var quester = {
 							switch (choose([true, true, true, false])) {
 								case true:
 									var damage = choose([1, 1, 1, 1, 1, 2, 2]);
-									self.hero.health -= damage;
-									if (self.hero.health <= 0) {
-										response(':crossed_swords: The ' + self.creature.name + ' ' + pluralize(getVerb().present) + ' at you, dealing **' + damage + ' damage**, and kills you in the process! **You have died!**');
+									getGame(channelID).hero.health -= damage;
+									if (getGame(channelID).hero.health <= 0) {
+										response(':crossed_swords: The ' + getGame(channelID).creature.name + ' ' + pluralize(getVerb().present) + ' at you, dealing **' + damage + ' damage**, and kills you in the process! **You have died!**');
 										setTimeout(function() {
-											self.gameover(response);
+											self.gameover(response, channelID);
 										}, 1000);
 									} else {
-										response(':crossed_swords: The ' + self.creature.name + ' ' + pluralize(getVerb().present) + ' at you, dealing **' + damage + ' damage**' + choose(['!', '!!', '?', '...', '.', '?!']) + ' What will you do now?');
-										self.canPerform = true;
+										response(':crossed_swords: The ' + getGame(channelID).creature.name + ' ' + pluralize(getVerb().present) + ' at you, dealing **' + damage + ' damage**' + choose(['!', '!!', '?', '...', '.', '?!']) + ' What will you do now?');
+										getGame(channelID).canPerform = true;
 									}
 									break;
 								case false:
-									response(':crossed_swords: The ' + self.creature.name + ' tried to ' + getVerb().present + ' at you, but ' + choose([
+									response(':crossed_swords: The ' + getGame(channelID).creature.name + ' tried to ' + getVerb().present + ' at you, but ' + choose([
 										'it missed',
 										'you dodged it',
 										'you were immune',
 										'it didn\'t affect you',
 										'it did nothing'
 									]) + choose(['!', '!!', '?', '...', '.', '?!']) + ' What will you do now?');
-									self.canPerform = true;
+									getGame(channelID).canPerform = true;
 									break;
 							}
 							break;
 						case true:
-							response(':dash: The ' + self.creature.name + ' **fled** from the ' + self.dungeon.currentRoom + choose(['!', '!!', '?', '...', '.', '?!']));
+							response(':dash: The ' + getGame(channelID).creature.name + ' **fled** from the ' + getGame(channelID).dungeon.currentRoom + choose(['!', '!!', '?', '...', '.', '?!']));
 							setTimeout(function() {
-								self.newRoom(response);
+								self.newRoom(response, channelID);
 							}, 2000);
 							break;
 					}
