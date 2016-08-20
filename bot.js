@@ -15,8 +15,9 @@ bot.on('message', function(user, userID, channelID, message, rawEvent) {
 		borg.handle(message, function(response)
 		{
 			var message = '<@' + userID + '>: ' + response;
+			var message = response;
 			bot.sendMessage({to: channelID, message: message});
 			console.log('[' + config.name + ' @ ' + channelID + ']: ' + message);
-		});
+		}, user);
 	}
 });

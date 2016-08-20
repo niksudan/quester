@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "discord.io": "^2.0.1"
+    "discord.io": "^2.0.1",
+    "pluralize": "^3.0.0"
   }
 }
