@@ -172,7 +172,7 @@ var quester = {
 					case true:
 					var damage = choose([1, 1, 1, 1, 2, 2, 2, 3]);
 					getGame(channelID).creature.health -= damage;
-						response(':crossed_swords: Your ' + action + ' the ' + getGame(channelID).creature.name + ' ' + getAdverb() + ' for **' + damage + ' damage**' + choose(['!', '!!', '?', '...', '.', '?!']));
+						response(':crossed_swords: You ' + action + ' the ' + getGame(channelID).creature.name + ' ' + getAdverb() + ' for **' + damage + ' damage**' + choose(['!', '!!', '?', '...', '.', '?!']));
 						break;
 				}
 			}, 1000);
