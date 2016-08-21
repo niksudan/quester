@@ -7,7 +7,8 @@ var borg = {
 		[/\bstart\b/i, 'quester', 'start'],
 		[/\bstatus\b/i, 'quester', 'status'],
 		[/\bperform ([A-Za-z ]*)\b/, 'quester', 'perform'],
-		[/\bgames\b/, 'quester', 'gameCount']
+		[/\bgames\b/, 'quester', 'gameCount'],
+		[/\bend\b/, 'quester', 'gameover']
 	],
 	
 	handle: function(message, response, user, channelID)

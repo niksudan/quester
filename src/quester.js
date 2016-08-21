@@ -118,12 +118,16 @@ var quester = {
 	},
 	
 	// Process gameover
-	gameover: function(response, channelID)
+	gameover: function(response, channelID, message, user, regex)
 	{
 		var self = this;
-		getGame(channelID).started = false;
-		response('** :skull: Rest in peace, ' + getGame(channelID).hero.name + ' :skull: **\n\n**' + getGame(channelID).dungeon.name + '**\nRooms Traversed: ' + getGame(channelID).rooms + '\nCreatures Killed: ' + getGame(channelID).kills);
-		deleteGame(channelID);
+		if (!isGameStarted(channelID)) {
+			response(':warning: An adventure has not started!');
+		} else if (getGame(channelID).canPerform) {
+			getGame(channelID).started = false;
+			response('** :skull: Rest in peace, ' + getGame(channelID).hero.name + ' :skull: **\n\n**' + getGame(channelID).dungeon.name + '**\nRooms Traversed: ' + getGame(channelID).rooms + '\nCreatures Killed: ' + getGame(channelID).kills);
+			deleteGame(channelID);
+		}
 	},
 	
 	// Process a new room
