@@ -181,8 +181,8 @@ var quester = {
 				if (getGame(channelID).creature.health <= 0) {
 					getGame(channelID).kills += 1;
 					response(':trophy: You defeated the ' + getGame(channelID).creature.name + choose(['!', '!!', '?', '...', '.', '?!']));
-					getGame(channelID).creature.name = '';
 					setTimeout(function() {
+						getGame(channelID).creature.name = '';
 						self.newRoom(response, channelID);
 					}, 2000);
 				} else {
