@@ -6,8 +6,8 @@ var borg = {
 		[/\bhelp\b/i, 'debug', 'help'],
 		[/\bstart\b/i, 'quester', 'start'],
 		[/\bstatus\b/i, 'quester', 'status'],
-		[/\bperform ([A-Za-z ]*)\b/, 'quester', 'perform'],
-		[/\bsay ([A-Za-z ]*)\b/, 'quester', 'say'],
+		[/\bperform (.*)\b/, 'quester', 'perform'],
+		[/\bsay (.*)\b/, 'quester', 'say'],
 		[/\bgames\b/, 'quester', 'gameCount'],
 		[/\bend\b/, 'quester', 'gameover']
 	],
