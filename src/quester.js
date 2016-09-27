@@ -224,6 +224,116 @@ var quester = {
 				}
 			}, 2000);
 		}
+	},
+	
+	// Say something
+	say: function(response, channelID, message, user, regex)
+	{
+	var self = this;
+		if (!getGame(channelID)) {
+			response(':warning: An adventure has not started!');
+		} else if (getGame(channelID).canPerform) {
+			getGame(channelID).canPerform = false;
+			var match = message.match(regex);
+			var phrase = match[1];
+			
+			// Process speech
+			response(':sound: You ' + choose([
+				'scream',
+				'shout',
+				'exclaim',
+				'say',
+				'whisper',
+			]) + ' **"' + phrase + '"**' + choose(['!', '!!', '?', '...', '.', '?!']));
+			
+			// Process reaction
+			var action = choose(['nothing', 'nothing', 'nothing', 'speak', 'speak', 'hurt', 'hurt', 'hurt', 'heal', 'damage', 'damage']);
+			setTimeout(function() {
+				str = '';
+				switch (action) {
+					case 'nothing':
+						str = ':mute: The ' + getGame(channelID).creature.name + ' ' + choose([
+							'didn\'t do anything',
+							'couldn\'t hear you',
+							'covered its ears',
+							'didn\'t understand you',
+							'just looked at you weirdly'
+						]) + choose(['!', '!!', '?', '...', '.', '?!']);
+						break;
+					case 'speak':
+						str = ':sound: The ' + getGame(channelID).creature.name + ' ' + choose([
+							'responds with',
+							'replies with',
+							'says back',
+							'screams back',
+							'whispers back',
+							'exclaims back'
+						]) + ' **"' + choose ([
+							getVerb().present + ' ' + choose(['my', 'your', 'the']) + ' ' + getNoun() + ' ' + getAdverb()
+						]) + '"** ' + choose(['!', '!!', '?', '...', '.', '?!']);
+						break;
+					case 'heal':
+						var recovery = choose([1, 1, 1, 1, 2, 2, 2, 3]);
+						getGame(channelID).hero.health += recovery;
+						str = ':sparkling_heart: The ' + getGame(channelID).creature.name + ' ' + choose([
+							'appreciates',
+							'likes',
+							'loves',
+							'enjoys',
+							'laughs at',
+							'smiles at',
+							'grins at',
+							'really likes',
+						]) + ' what you said and ' + getAdverb() + ' heals you for **' + recovery +  ' health**' + choose(['!', '!!', '?', '...', '.', '?!']);
+						break;
+					case 'damage':
+						var damage = choose([1, 1, 1, 1, 2, 2, 2, 3]);
+						getGame(channelID).creature.health -= damage;
+						str = ':crossed_swords: The ' + getGame(channelID).creature.name + ' is ' + getAdverb() + ' hurt for **' + damage +  ' damage**' + choose(['!', '!!', '?', '...', '.', '?!']);
+						break;
+					case 'hurt':
+						var damage = choose([1, 1, 1, 1, 2, 2, 2, 3]);
+						getGame(channelID).hero.health -= damage;
+						str = ':crossed_swords: The ' + getGame(channelID).creature.name + ' ' + choose([
+							'takes offense',
+							'gets annoyed',
+							'ignores you',
+							'couldn\'t understand you',
+							'didn\'t hear you'
+						]) + ' and ' + getAdverb() + ' hurts you for **' + damage +  ' damage**' + choose(['!', '!!', '?', '...', '.', '?!']);
+						break;
+				}
+				
+				// Handle creature defeat
+				if (getGame(channelID).creature.health <= 0) {
+					response(str);
+					setTimeout(function() {
+						getGame(channelID).kills += 1;
+						response(':trophy: You defeated the ' + getGame(channelID).creature.name + choose(['!', '!!', '?', '...', '.', '?!']));
+						setTimeout(function() {
+							self.newRoom(response, channelID);
+						}, 2000);
+					}, 1000);
+					getGame(channelID).creature.name = '';
+					
+				// Handle player death
+				} else if (getGame(channelID).hero.health <= 0) {
+					str += ' It kills you! **You have died!**';
+					response(str);
+					setTimeout(function() {
+						self.gameover(response, channelID);
+					}, 1000);
+					
+				// Everything else
+				} else {
+					str += ' What will you do now?';
+					response(str);
+					getGame(channelID).canPerform = true;
+				}
+				
+			}, 1000);
+			
+		}
 	}
 };
 
