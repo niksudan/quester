@@ -1,3 +1,4 @@
+
 var pluralize = require('pluralize');
 
 var choose = function(array) {
@@ -33,14 +34,6 @@ var getGame = function(channelID) {
 
 var deleteGame = function(channelID) {
 	delete games['#' + channelID];
-}
-
-var isGameStarted = function(channelID) {
-	var game = getGame(channelID);
-	if (game == undefined) {
-		return false;
-	}
-	return true;
 }
 
 var quester = {
@@ -83,7 +76,7 @@ var quester = {
 	start: function(response, channelID, message, user, regex)
 	{
 		var self = this;
-		if (isGameStarted(channelID)) {
+		if (getGame(channelID)) {
 			response(':warning: A game has already begun!');
 		} else {
 			self.newGame(channelID);
@@ -106,7 +99,7 @@ var quester = {
 	status: function(response, channelID, message, user, regex)
 	{
 		var self = this;
-		if (!isGameStarted(channelID)) {
+		if (!getGame(channelID)) {
 			response(':warning: An adventure has not started!');
 		} else {
 			var str = '**:walking: ' + getGame(channelID).hero.name + '** [HP: ' + getGame(channelID).hero.health + ']';
@@ -121,9 +114,9 @@ var quester = {
 	gameover: function(response, channelID, message, user, regex)
 	{
 		var self = this;
-		if (!isGameStarted(channelID)) {
+		if (!getGame(channelID)) {
 			response(':warning: An adventure has not started!');
-		} else if (getGame(channelID).canPerform) {
+		} else {
 			getGame(channelID).started = false;
 			response('** :skull: Rest in peace, ' + getGame(channelID).hero.name + ' :skull: **\n\n**' + getGame(channelID).dungeon.name + '**\nRooms Traversed: ' + getGame(channelID).rooms + '\nCreatures Killed: ' + getGame(channelID).kills);
 			deleteGame(channelID);
@@ -134,30 +127,32 @@ var quester = {
 	newRoom: function(response, channelID)
 	{
 		var self = this;
-		getGame(channelID).rooms += 1;
-		getGame(channelID).dungeon.currentRoom = getAdj() + ' ' + getNoun();
-		response(':runner: You ' + getVerb().present + ' into a ' + getGame(channelID).dungeon.currentRoom + '...');
-		
-		setTimeout(function() {
-			getGame(channelID).dungeon.currentType = choose(['encounter']);
-			switch (getGame(channelID).dungeon.currentType) {
-				
-				// Creature encounter
-				case 'encounter':
-					getGame(channelID).creature.name = getAdj() + ' ' + getNoun();
-					getGame(channelID).creature.health = choose([1, 2, 3, 3, 3, 3, 4, 4, 5]);
-					response(':boar: A **' + getGame(channelID).creature.name + '** ' + pluralize(getVerb().present) + ' at you' + choose(['!', '!!', '?', '...', '.', '?!']) + ' What will you do?');
-					getGame(channelID).canPerform = true;
-					break;
-			};
-		}, 1000);
+		if (getGame(channelID)) {
+			getGame(channelID).rooms += 1;
+			getGame(channelID).dungeon.currentRoom = getAdj() + ' ' + getNoun();
+			response(':runner: You ' + getVerb().present + ' into a ' + getGame(channelID).dungeon.currentRoom + '...');
+			
+			setTimeout(function() {
+				getGame(channelID).dungeon.currentType = choose(['encounter']);
+				switch (getGame(channelID).dungeon.currentType) {
+					
+					// Creature encounter
+					case 'encounter':
+						getGame(channelID).creature.name = getAdj() + ' ' + getNoun();
+						getGame(channelID).creature.health = choose([1, 2, 3, 3, 3, 3, 4, 4, 5]);
+						response(':boar: A **' + getGame(channelID).creature.name + '** ' + pluralize(getVerb().present) + ' at you' + choose(['!', '!!', '?', '...', '.', '?!']) + ' What will you do?');
+						getGame(channelID).canPerform = true;
+						break;
+				};
+			}, 1000);
+		}
 	},
 	
 	// Perform an action
 	perform: function(response, channelID, message, user, regex)
 	{
 		var self = this;
-		if (!isGameStarted(channelID)) {
+		if (!getGame(channelID)) {
 			response(':warning: An adventure has not started!');
 		} else if (getGame(channelID).canPerform) {
 			getGame(channelID).canPerform = false;
